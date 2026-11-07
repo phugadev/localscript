@@ -70,6 +70,41 @@ def _brand() -> None:
         pass
 
 
+def _match_background(window) -> None:
+    """A web view lags a beat behind its window when you resize or zoom it, and until it repaints, the new area
+    shows the window's background, which is white by default (a blank band next to the content). Give the window
+    and web view the page's own colour instead, following light/dark mode, so the gap blends in."""
+    try:
+        import AppKit
+        from PyObjCTools import AppHelper
+
+        def page_colour():
+            def pick(appearance):
+                names = [AppKit.NSAppearanceNameAqua, AppKit.NSAppearanceNameDarkAqua]
+                dark = appearance.bestMatchFromAppearancesWithNames_(names) == AppKit.NSAppearanceNameDarkAqua
+                r, g, b = (0x10, 0x10, 0x11) if dark else (0xF6, 0xF5, 0xF2)  # same as --bg in index.html
+                return AppKit.NSColor.colorWithSRGBRed_green_blue_alpha_(r / 255, g / 255, b / 255, 1.0)
+            try:
+                return AppKit.NSColor.colorWithName_dynamicProvider_(None, pick)
+            except Exception:  # noqa: BLE001 - fall back to the system window colour (still dark in dark mode)
+                return AppKit.NSColor.windowBackgroundColor()
+
+        def apply() -> None:
+            win, colour = window.native, page_colour()
+            win.setBackgroundColor_(colour)
+            wk = win.contentView()
+            if hasattr(wk, "setUnderPageBackgroundColor_"):
+                wk.setUnderPageBackgroundColor_(colour)
+            try:
+                wk.setValue_forKey_(False, "drawsBackground")  # let the window colour show where nothing is painted yet
+            except Exception:  # noqa: BLE001
+                pass
+
+        AppHelper.callAfter(apply)
+    except Exception:  # noqa: BLE001 - cosmetic only
+        pass
+
+
 def _stay_awake_while_busy() -> None:
     """Hold a user-initiated activity assertion while jobs are unfinished, so macOS doesn't App-Nap a window that
     is behind other apps and slow a long batch. Released when the queue is empty (system idle sleep is still
@@ -139,6 +174,7 @@ def run(port: int | None = None, debug: bool = False) -> int:
         return True
 
     window.events.closing += on_closing
+    window.events.loaded += lambda: _match_background(window)
     _brand()
     webview.start(debug=debug)
     return 0

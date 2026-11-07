@@ -6,6 +6,7 @@ first time a Whisper model is fetched).
 """
 from __future__ import annotations
 
+import atexit
 import contextlib
 import csv
 import io
@@ -410,7 +411,26 @@ def _load_parakeet():
         transcribe_cpp.set_log_callback(None)
         model = transcribe_cpp.Model(gguf)
     _parakeet = (transcribe_cpp, model)
+    atexit.register(_close_parakeet)
     return _parakeet
+
+
+def _close_parakeet() -> None:
+    """Free the Parakeet model's Metal buffers before the interpreter exits. ggml asserts, and aborts the whole
+    process (a crash report on every quit), if its Metal device is torn down while model buffers are still
+    alive, which happens when daemon server threads keep Python from freeing the model during shutdown."""
+    global _parakeet
+    if _parakeet is None or not _tx_lock.acquire(timeout=3):  # don't pull the model out from under a running job
+        return
+    try:
+        _tc, model = _parakeet
+        _parakeet = None
+        with _quiet_stderr():
+            model.close()
+    except Exception:  # noqa: BLE001 - exiting anyway
+        pass
+    finally:
+        _tx_lock.release()
 
 
 def _read_wav_f32(wav: Path):

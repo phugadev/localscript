@@ -126,7 +126,7 @@ def run(port: int | None = None, debug: bool = False) -> int:
         return 0
 
     webview.settings["ALLOW_DOWNLOADS"] = True  # the export buttons download files
-    window = webview.create_window(APP_NAME, url, width=1040, height=860, min_size=(480, 600))
+    window = webview.create_window(APP_NAME, url, width=760, height=620, min_size=(460, 440))
 
     def on_closing():
         n = len(db.unfinished_ids())

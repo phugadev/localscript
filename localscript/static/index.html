@@ -7,207 +7,212 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23e8453c'/%3E%3Cpath d='M8 12h16M8 17h16M8 22h10' stroke='%23fff' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
   :root {
-    --bg: #f6f5f2; --surface: #ffffff; --surface-2: #faf9f7; --text: #1a1a1a; --muted: #6a6a6a;
-    --line: #e5e3de; --accent: #e8453c; --accent-ink: #ffffff; --accent-soft: #fdecea;
-    --ok: #17803f; --ok-soft: #e3f4ea; --warn: #9a5b00; --warn-soft: #fcf0d9; --err: #b3261e; --err-soft: #fbe7e5;
-    --radius: 14px; --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
+    --bg: #f6f5f2; --surface: #ffffff; --surface-2: #faf9f7; --text: #1a1a1a; --muted: #6a6a6a; --faint: #9a9a96;
+    --line: #e5e3de; --accent: #e8453c; --accent-ink: #ffffff; --star: #d99a1f;
+    --ok: #17803f; --warn: #9a5b00; --warn-soft: #fcf0d9; --err: #b3261e; --pop: 0 10px 30px rgba(0,0,0,.14);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #101011; --surface: #19191b; --surface-2: #1f1f22; --text: #ececec; --muted: #9b9ba1;
-      --line: #2c2c30; --accent: #ff5d52; --accent-ink: #1a0503; --accent-soft: #3a1a18;
-      --ok: #4cc983; --ok-soft: #14291d; --warn: #e5a53f; --warn-soft: #2e2410; --err: #ff7468; --err-soft: #331816;
-      --shadow: none;
+      --bg: #101011; --surface: #19191b; --surface-2: #1f1f22; --text: #ececec; --muted: #9b9ba1; --faint: #6f6f75;
+      --line: #2c2c30; --accent: #ff5d52; --accent-ink: #1a0503; --star: #e5a53f;
+      --ok: #4cc983; --warn: #e5a53f; --warn-soft: #2e2410; --err: #ff7468; --pop: 0 10px 30px rgba(0,0,0,.5);
     }
   }
   * { box-sizing: border-box; }
   html { color-scheme: light dark; }
   body {
     margin: 0; background: var(--bg); color: var(--text);
-    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 860px; margin: 0 auto; padding: 32px 16px 80px; }
-  header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-  .logo { width: 36px; height: 36px; border-radius: 10px; background: var(--accent); display: grid; place-items: center; flex: none; }
-  h1 { font-size: 22px; letter-spacing: -.02em; margin: 0; line-height: 1.1; }
-  header p { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; }
-  .badge-local { margin-left: auto; font-size: 12px; color: var(--ok); background: var(--ok-soft); padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
+  [hidden] { display: none !important; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  svg { display: block; flex: none; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 12px 48px; }
 
-  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
-  .input-panel { padding: 16px; }
-  textarea#urls {
-    width: 100%; min-height: 104px; resize: vertical; padding: 12px 14px; border-radius: 10px;
-    border: 1px solid var(--line); background: var(--surface-2); color: var(--text);
-    font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* top: input bar + filter row (sticky so pasting is always one click away) */
+  .top { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 12px 0 6px; }
+  .bar { position: relative; display: flex; align-items: center; gap: 6px; }
+  .in {
+    flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 5px 0 12px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px; color: var(--faint);
   }
-  textarea#urls:focus, select:focus, input[type=search]:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
-  .hint { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12.5px; margin: 6px 2px 12px; flex-wrap: wrap; }
-  .opts { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin-bottom: 14px; }
-  .opts label { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--text); }
-  .opts label.col { flex-direction: column; align-items: flex-start; gap: 3px; font-size: 12px; color: var(--muted); max-width: 100%; min-width: 0; }
-  .opts label.col select { max-width: 100%; min-width: 0; text-overflow: ellipsis; }
-  select, input[type=search] {
-    font: inherit; font-size: 13.5px; color: var(--text); background: var(--surface-2);
-    border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; max-width: 100%;
-  }
-  .actions { display: flex; align-items: center; gap: 12px; }
-  button { font: inherit; cursor: pointer; }
-  .btn-primary {
-    background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 10px;
-    padding: 10px 20px; font-weight: 600; font-size: 15px;
-  }
-  .btn-primary:hover { filter: brightness(1.06); }
-  .btn-primary:disabled { opacity: .5; cursor: default; }
-  .kbd { font-size: 12px; color: var(--muted); }
-  .btn { background: var(--surface-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; font-size: 13px; text-decoration: none; display: inline-block; }
-  .btn:hover { border-color: var(--muted); }
-  .btn:disabled { opacity: .45; cursor: default; }
-  .icon-btn { background: none; border: 0; color: var(--muted); padding: 6px; border-radius: 8px; line-height: 1; font-size: 17px; }
-  .icon-btn:hover { background: var(--surface-2); color: var(--text); }
-  .icon-btn.on { color: #e5a53f; }
+  .in:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+  .in input { flex: 1; min-width: 0; height: 38px; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; font-size: 14px; padding: 0; }
+  .in input::placeholder { color: var(--faint); }
+  .chip { display: inline-flex; align-items: center; gap: 2px; height: 24px; padding: 0 2px 0 9px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); color: var(--text); font-size: 12.5px; white-space: nowrap; }
+  .chip button { display: grid; place-items: center; width: 20px; height: 20px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); padding: 0; }
+  .chip button:hover { background: var(--line); }
+  .go { height: 30px; padding: 0 14px; border: 0; border-radius: 7px; background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 13px; white-space: nowrap; }
+  .go:hover { filter: brightness(1.07); }
+  .go:disabled { opacity: .55; cursor: default; }
+  .ib { position: relative; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--muted); flex: none; }
+  .ib:hover { background: var(--surface); color: var(--text); }
+  .ib:disabled { opacity: .35; cursor: default; background: transparent; }
+  .ib.big { width: 40px; height: 40px; }
+  .dot { position: absolute; top: 7px; right: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
 
-  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 28px 0 12px; }
-  .bar h2 { font-size: 15px; margin: 0; letter-spacing: -.01em; }
-  .bar .spacer { flex: 1; }
-  .bar input[type=search] { width: 190px; }
-  .chip-toggle { display: inline-flex; gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-  .chip-toggle button { background: var(--surface); color: var(--muted); border: 0; padding: 5px 11px; font-size: 13px; }
-  .chip-toggle button.on { background: var(--text); color: var(--bg); }
+  .pop {
+    position: absolute; top: calc(100% + 6px); right: 0; width: 280px; padding: 12px; z-index: 8;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--pop);
+  }
+  .pop label.f { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 3px; }
+  .pop label.f:first-child { margin-top: 0; }
+  .pop select { width: 100%; height: 30px; font: inherit; font-size: 13px; color: var(--text); background: var(--surface-2); border: 1px solid var(--line); border-radius: 7px; padding: 0 6px; }
+  .pop .ck { display: flex; align-items: center; gap: 7px; margin-top: 10px; font-size: 13px; }
+  .pop .hint { font-size: 12px; color: var(--muted); margin: 4px 0 0; }
+  .pop input[type=checkbox], .pick input { accent-color: var(--accent); margin: 0; }
 
-  .list { display: flex; flex-direction: column; gap: 10px; }
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
-  .row { display: flex; gap: 12px; padding: 12px; align-items: flex-start; }
+  .fl { display: flex; align-items: center; gap: 6px; margin-top: 6px; min-height: 30px; font-size: 13px; }
+  .seg { display: inline-flex; gap: 2px; }
+  .seg button { height: 26px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-size: 13px; }
+  .seg button.on { background: var(--surface); color: var(--text); box-shadow: 0 0 0 1px var(--line); }
+  .sp { flex: 1; }
+  .q { width: 180px; height: 28px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--text); font: inherit; font-size: 13px; padding: 0 8px; outline: 0; }
+  .q:focus { border-color: var(--accent); }
+  .selbar { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .selbar select { height: 26px; font: inherit; font-size: 12.5px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 7px; padding: 0 4px; }
+  .lk { border: 0; background: transparent; color: var(--accent); padding: 0 2px; font-size: 13px; }
+  .btn { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--text); font-size: 12.5px; text-decoration: none; white-space: nowrap; }
+  .btn:hover { border-color: var(--faint); }
+  .btn.on { background: var(--surface-2); border-color: var(--faint); }
+
+  /* history */
+  .list { margin-top: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .item + .item { border-top: 1px solid var(--line); }
+  .row { display: flex; align-items: center; gap: 11px; padding: 8px 12px; outline: 0; }
   .row.clickable { cursor: pointer; }
-  .row.clickable:hover { background: var(--surface-2); }
-  .pick { margin-top: 4px; accent-color: var(--accent); }
-  .thumb { width: 56px; height: 76px; border-radius: 8px; background: var(--surface-2) center/cover no-repeat; border: 1px solid var(--line); flex: none; display: grid; place-items: center; color: var(--muted); font-size: 20px; }
-  .main { flex: 1; min-width: 0; }
-  .title { font-weight: 600; font-size: 14.5px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
-  .sub { color: var(--muted); font-size: 12.5px; margin-top: 3px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
-  .tag { font-size: 11px; font-weight: 600; letter-spacing: .02em; padding: 1px 7px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); color: var(--text); }
-  .tag.tiktok { background: #101010; color: #fff; border-color: #101010; }
-  .tag.instagram { background: #fdeaf3; color: #b0245f; border-color: #f6cde0; }
-  .tag.youtube, .tag.shorts { background: #fdeaea; color: #c4170c; border-color: #f7cdcb; }
-  @media (prefers-color-scheme: dark) {
-    .tag.tiktok { background: #fff; color: #101010; border-color: #fff; }
-    .tag.instagram { background: #3a1a2a; color: #ff8fbb; border-color: #4f2338; }
-    .tag.youtube, .tag.shorts { background: #3a1a18; color: #ff8a80; border-color: #512320; }
-  }
-  .preview { margin-top: 6px; color: var(--text); opacity: .85; font-size: 13.5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
-  .preview.none { color: var(--muted); font-style: italic; }
-  .card.open .preview { display: none; }
-  .state { margin-top: 6px; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; padding: 3px 10px; border-radius: 99px; }
-  .state.queued { background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
-  .state.run { background: var(--warn-soft); color: var(--warn); }
-  .err { margin-top: 6px; font-size: 13px; color: var(--err); background: var(--err-soft); padding: 8px 10px; border-radius: 8px; word-break: break-word; white-space: pre-wrap; }
-  .spin { width: 12px; height: 12px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; flex: none; }
+  .row:hover, .row:focus-visible { background: var(--surface-2); }
+  .th { position: relative; width: 36px; height: 48px; flex: none; border-radius: 6px; background: var(--surface-2) center/cover no-repeat; border: 1px solid var(--line); display: grid; place-items: center; color: var(--faint); overflow: hidden; }
+  .th .scrim { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.5); color: #fff; }
+  .pick { position: absolute; left: 3px; top: 3px; display: none; padding: 1px; border-radius: 4px; background: var(--surface); line-height: 0; }
+  .item:hover .pick, .selecting .pick, .pick:has(input:checked) { display: block; }
+  .tx { flex: 1; min-width: 0; }
+  .tx p { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ti { font-size: 13.5px; font-weight: 600; line-height: 1.35; }
+  .mt { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .mt.run { display: flex; align-items: center; gap: 6px; color: var(--warn); }
+  .mt.bad { color: var(--err); white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .rt { position: relative; flex: none; min-width: 74px; height: 28px; font-size: 12px; color: var(--faint); }
+  .ago { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .ago .st { color: var(--star); }
+  .ac { position: absolute; right: 0; top: 50%; transform: translateY(-50%); display: none; }
+  .row:hover .ac, .is-err .ac { display: flex; }
+  .row:hover .ago, .is-err .ago { visibility: hidden; }
+  .ac button { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--muted); }
+  .ac button:hover { background: var(--line); color: var(--text); }
+  .ac button.on { color: var(--star); }
+  .ac button:disabled { opacity: .35; cursor: default; background: transparent; }
+  .spin { width: 11px; height: 11px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; flex: none; }
+  .spin.big { width: 16px; height: 16px; }
   @keyframes spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 3s; } }
-  .acts { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: none; }
-  .acts-row { display: flex; }
 
-  .body { border-top: 1px solid var(--line); padding: 14px 14px 16px; background: var(--surface-2); }
-  .tools { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; margin-bottom: 12px; }
-  .tools .grp { display: inline-flex; gap: 4px; align-items: center; flex-wrap: wrap; }
-  .tools .lbl { font-size: 12px; color: var(--muted); margin-right: 2px; }
-  .tools label { font-size: 13px; display: inline-flex; gap: 5px; align-items: center; }
-  .transcript { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; max-height: 420px; overflow: auto; font-size: 15px; line-height: 1.65; user-select: text; }
+  /* open item: poster (plays the saved video) + transcript */
+  .body { display: flex; gap: 14px; padding: 10px 12px 12px; background: var(--surface-2); border-top: 1px solid var(--line); }
+  .poster { position: relative; width: 84px; height: 112px; flex: none; border: 1px solid var(--line); border-radius: 9px; background: #111 center/cover no-repeat; display: grid; place-items: center; padding: 0; color: #fff; text-decoration: none; overflow: hidden; }
+  .poster .pl { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: rgba(0,0,0,.55); }
+  .poster .pl.ext { width: 26px; height: 26px; opacity: 0; transition: opacity .15s; }
+  .poster:hover .pl.ext { opacity: 1; }
+  .pv { width: 210px; max-height: 340px; flex: none; border-radius: 9px; background: #000; align-self: flex-start; }
+  .bd { flex: 1; min-width: 0; }
+  .tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .menuwrap { position: relative; }
+  .menu { position: absolute; top: calc(100% + 4px); left: 0; min-width: 150px; padding: 4px; z-index: 6; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--pop); }
+  .menu a { display: block; padding: 6px 10px; border-radius: 6px; color: var(--text); text-decoration: none; font-size: 13px; }
+  .menu a:hover { background: var(--surface-2); }
+  .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 2px; }
+  .transcript { max-height: 300px; overflow: auto; font-size: 14px; line-height: 1.62; user-select: text; }
   .transcript p { margin: 0; white-space: pre-wrap; }
-  .seg { display: flex; gap: 12px; padding: 3px 0; }
-  .seg time { color: var(--accent); font: 12.5px/1.9 ui-monospace, Menlo, monospace; flex: none; width: 38px; }
-  .meta-line { color: var(--muted); font-size: 12.5px; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 4px 14px; }
-  .meta-line a { color: var(--muted); }
+  .transcript .none { color: var(--muted); font-style: italic; }
+  .seg-l { display: flex; gap: 10px; padding: 2px 0; }
+  .seg-l time { color: var(--accent); font: 12px/1.9 ui-monospace, Menlo, monospace; flex: none; width: 34px; }
+  .ml { margin: 8px 0 0; font-size: 12px; color: var(--faint); }
 
-  .empty { text-align: center; color: var(--muted); padding: 44px 16px; border: 1px dashed var(--line); border-radius: var(--radius); }
-  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.25); z-index: 9; max-width: calc(100% - 32px); }
-  [hidden] { display: none !important; }
+  .empty { text-align: center; color: var(--muted); font-size: 13px; padding: 36px 16px; }
+  .toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 9px 14px; border-radius: 10px; font-size: 13px; box-shadow: var(--pop); z-index: 20; max-width: calc(100% - 32px); }
   @media (max-width: 560px) {
-    .bar input[type=search] { width: 100%; order: 5; }
-    .badge-local { display: none; }
-    .thumb { width: 46px; height: 62px; }
+    .body { flex-direction: column; }
+    .q { width: 120px; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div class="logo" aria-hidden="true">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M4 8h16M4 13h16M4 18h10"/></svg>
-    </div>
-    <div>
-      <h1>LocalScript</h1>
-      <p>Speech to text for TikTok, Reels &amp; YouTube Shorts</p>
-    </div>
-    <span class="badge-local" title="Videos are downloaded and transcribed on this computer. Nothing is uploaded.">● Runs on this Mac</span>
-  </header>
-
-  <section class="panel input-panel" aria-label="New transcription">
-    <textarea id="urls" spellcheck="false" aria-label="Video links"
-      placeholder="Paste links — one per line (up to 50 at once)&#10;https://www.tiktok.com/@user/video/…&#10;https://www.instagram.com/reel/…&#10;https://www.youtube.com/shorts/…&#10;Profiles, playlists &amp; TikTok collections work too"></textarea>
-    <div class="hint"><span id="count">No links yet</span><span>Works with any link yt-dlp supports</span></div>
-
-    <div class="opts">
-      <label class="col">Model
+  <div class="top">
+    <div class="bar">
+      <div class="in">
+        <span data-ico="link"></span>
+        <span class="chip" id="chip" hidden><span id="chipn"></span><button id="chipx" aria-label="Clear pasted links" data-ico="x" data-size="12"></button></span>
+        <input id="url" type="text" placeholder="Paste a TikTok, Reel, or Shorts link" spellcheck="false" autocomplete="off" aria-label="Video link">
+        <button class="go" id="go">Transcribe</button>
+      </div>
+      <button class="ib big" id="gear" aria-label="Options" aria-haspopup="true" title="Options"><span data-ico="sliders" data-size="18"></span><i class="dot" id="gdot" hidden></i></button>
+      <div class="pop" id="pop" hidden>
+        <label class="f" for="model">Model</label>
         <select id="model"></select>
-      </label>
-      <label class="col">Spoken language
-        <select id="language">
-          <option value="">Auto-detect</option>
-        </select>
-      </label>
-      <label class="col" title="Browser whose logged-in session yt-dlp should borrow (needed for some Instagram / private videos)">Sign-in
+        <p class="hint" id="minfo"></p>
+        <label class="f" for="language">Spoken language</label>
+        <select id="language"><option value="">Auto-detect</option></select>
+        <label class="ck"><input type="checkbox" id="translate"> Translate to English</label>
+        <p class="hint" id="tr-note" hidden></p>
+        <label class="ck"><input type="checkbox" id="save_video"> Save HD video</label>
+        <label class="f" for="cookies">Sign in with a browser's cookies</label>
         <select id="cookies">
-          <option value="">None</option>
-          <option value="chrome">Use my Chrome cookies</option>
-          <option value="safari">Use my Safari cookies</option>
-          <option value="firefox">Use my Firefox cookies</option>
-          <option value="brave">Use my Brave cookies</option>
-          <option value="edge">Use my Edge cookies</option>
+          <option value="">None</option><option value="chrome">Chrome</option><option value="safari">Safari</option>
+          <option value="firefox">Firefox</option><option value="brave">Brave</option><option value="edge">Edge</option>
         </select>
-      </label>
+      </div>
     </div>
-    <div class="opts">
-      <label><input type="checkbox" id="translate"> Translate to English</label>
-      <span class="kbd" id="tr-note" hidden></span>
-      <label><input type="checkbox" id="save_video"> Save HD video</label>
-      <label title="Turn profile, playlist and collection links into their individual videos"><input type="checkbox" id="expand" checked> Expand profiles &amp; playlists</label>
+    <div class="fl">
+      <div class="seg" role="group" aria-label="Filter"><button id="f-all" class="on">All</button><button id="f-star">Starred</button></div>
+      <span class="sp"></span>
+      <div id="srch" style="display:flex;align-items:center;gap:4px">
+        <input class="q" id="q" type="search" placeholder="Search" aria-label="Search history" hidden>
+        <button class="ib" id="sbtn" aria-label="Search" title="Search" data-ico="search"></button>
+      </div>
+      <div class="selbar" id="selbar" hidden>
+        <span id="seln"></span><button class="lk" id="sel-all">Select all</button>
+        <select id="bulk-fmt" aria-label="Export format"><option value="txt">TXT</option><option value="srt">SRT</option><option value="vtt">VTT</option><option value="json">JSON</option><option value="csv">CSV</option><option value="xml">XML</option></select>
+        <button class="btn" id="bulk">Export .zip</button>
+        <button class="ib" id="sel-x" aria-label="Clear selection" data-ico="x"></button>
+      </div>
     </div>
-    <div class="actions">
-      <button class="btn-primary" id="go">Transcribe</button>
-      <span class="kbd">⌘ Enter</span>
-    </div>
-  </section>
-
-  <div class="bar">
-    <h2>History</h2>
-    <div class="chip-toggle" role="group" aria-label="Filter">
-      <button id="f-all" class="on">All</button><button id="f-star">★ Bookmarked</button>
-    </div>
-    <input type="search" id="q" placeholder="Search transcripts…" aria-label="Search history">
-    <span class="spacer"></span>
-    <button class="btn" id="sel-all">Select all</button>
-    <select id="bulk-fmt" aria-label="Bulk export format">
-      <option value="txt">TXT</option><option value="srt">SRT</option><option value="vtt">VTT</option>
-      <option value="json">JSON</option><option value="csv">CSV</option><option value="xml">XML</option>
-    </select>
-    <button class="btn" id="bulk" disabled>Export selected (.zip)</button>
   </div>
 
-  <div class="list" id="list" aria-live="polite"></div>
-  <div class="empty" id="empty" hidden>Nothing here yet. Paste a link above to get your first transcript.</div>
+  <div class="list" id="list" aria-live="polite" hidden></div>
+  <p class="empty" id="empty">Paste a link above to get started.</p>
 </div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
 const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LANGS = {en:'English',es:'Spanish',pt:'Portuguese',fr:'French',de:'German',it:'Italian',nl:'Dutch',ru:'Russian',uk:'Ukrainian',pl:'Polish',tr:'Turkish',ar:'Arabic',hi:'Hindi',id:'Indonesian',vi:'Vietnamese',th:'Thai',ja:'Japanese',ko:'Korean',zh:'Chinese',sv:'Swedish'};
 const PLAT = {tiktok:'TikTok',instagram:'Reels',youtube:'YouTube',shorts:'Shorts',facebook:'Facebook',x:'X',other:'Video'};
 const FORMATS = ['txt','srt','vtt','json','csv','xml'];
 const ACTIVE = new Set(['queued','downloading','transcribing']);
 
-const state = { jobs: [], expanded: new Set(), details: new Map(), selected: new Set(), starred: false, q: '', ts: false, timer: null };
+// inline icons (no network needed): stroke icons on a 24px grid
+const P = {
+  link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  sliders: '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
+  search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  external: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>',
+  chevron: '<polyline points="6 9 12 15 18 9"/>',
+  retry: '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>',
+  play: '<polygon points="6 4 20 12 6 20 6 4"/>',
+};
+const ico = (n, size = 16, filled = false) =>
+  `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="${filled ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
+
+const state = { jobs: [], expanded: new Set(), details: new Map(), selected: new Set(), starred: false, q: '', ts: false, timer: null, pending: [] };
 
 // ---------- helpers
 const store = {
@@ -230,65 +235,57 @@ function toast(msg, ms = 3500) {
 const fmtDur = s => s == null ? '' : `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 const fmtNum = n => n == null ? '' : n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : String(n);
 const safeHref = u => /^https?:\/\//i.test(u || '') ? u : '#';
-function countUrls(text) {
-  return new Set((text.match(/(https?:\/\/[^\s,<>"']+|(?:[\w-]+\.)*(?:tiktok\.com|instagram\.com|youtube\.com|youtu\.be)\/[^\s,<>"']+)/gi) || [])).size;
-}
+const ago = t => {
+  const s = Date.now() / 1000 - (t || 0);
+  return s < 60 ? 'now' : s < 3600 ? Math.floor(s / 60) + 'm' : s < 86400 ? Math.floor(s / 3600) + 'h' : Math.floor(s / 86400) + 'd';
+};
+const URL_RE = /(https?:\/\/[^\s,<>"']+|(?:[\w-]+\.)*(?:tiktok\.com|instagram\.com|youtube\.com|youtu\.be)\/[^\s,<>"']+)/gi;
+const extractUrls = text => [...new Set((text.match(URL_RE) || []).map(u => u.replace(/[.,;!?)\]]+$/, '')))];
 
-// ---------- setup
-const langSel = $('#language');
-for (const [k, v] of Object.entries(LANGS)) langSel.add(new Option(v, k));
-
-let MODELS = [];
-async function loadModels() {
-  const { default: def, models } = await api('/api/models');
-  MODELS = models;
-  const sel = $('#model'); sel.innerHTML = '';
-  for (const m of models) {
-    const state = !m.available ? '' : m.cached ? ' ✓' : ' (downloads on first use)';
-    const opt = new Option(`${m.id} — ${m.info}${state}`, m.id);
-    opt.disabled = !m.available;
-    sel.add(opt);
-  }
-  sel.value = store.get('model', def);
-  if (!sel.value || sel.selectedOptions[0]?.disabled) sel.value = def;
-  updateNote();
+// ---------- input bar
+function linkCount() { return state.pending.length + extractUrls($('#url').value).length; }
+function updateInput() {
+  const n = state.pending.length;
+  $('#chip').hidden = n === 0; $('#chipn').textContent = `${n} link${n > 1 ? 's' : ''}`;
+  const total = linkCount();
+  $('#go').textContent = total > 1 ? `Transcribe ${total}` : 'Transcribe';
 }
-// Neither Parakeet nor large-v3-turbo can translate, so the server switches to Whisper large-v3 — say so up front.
-function updateNote() {
-  const note = $('#tr-note');
-  if ($('#translate').checked && ['auto', 'parakeet-ultra', 'large-v3-turbo'].includes($('#model').value)) {
-    const v3 = MODELS.find(m => m.id === 'large-v3');
-    note.textContent = '· translation uses Whisper large-v3' + (v3 && !v3.cached ? ' (~3 GB download on first use)' : '');
-    note.hidden = false;
-  } else note.hidden = true;
+function addPending(urls) {
+  for (const u of urls) if (!state.pending.includes(u)) state.pending.push(u);
+  updateInput();
 }
-for (const id of ['model', 'language', 'cookies']) $('#' + id).addEventListener('change', e => { store.set(id, e.target.value); updateNote(); });
-for (const id of ['translate', 'save_video', 'expand']) $('#' + id).addEventListener('change', e => { store.set(id, e.target.checked); updateNote(); });
-function restoreOpts() {
-  $('#language').value = store.get('language', '');
-  $('#cookies').value = store.get('cookies', '');
-  for (const id of ['translate', 'save_video']) $('#' + id).checked = store.get(id, false);
-  $('#expand').checked = store.get('expand', true);
+// Several pasted links collapse into one chip so the field stays a single line.
+function handlePaste(e, target) {
+  const text = e.clipboardData?.getData('text') ?? '';
+  const urls = extractUrls(text);
+  if (urls.length > 1) { e.preventDefault(); addPending(urls); target.focus(); }
+  else if (target !== e.target) { e.preventDefault(); target.value = text.trim(); target.focus(); updateInput(); }
 }
-
-$('#urls').addEventListener('input', e => {
-  const n = countUrls(e.target.value);
-  $('#count').textContent = n ? `${n} link${n > 1 ? 's' : ''} detected` : 'No links yet';
+$('#url').addEventListener('paste', e => handlePaste(e, $('#url')));
+document.addEventListener('paste', e => {          // pasting anywhere in the window goes to the link field
+  if (e.target.closest('input, textarea, select')) return;
+  handlePaste(e, $('#url'));
 });
-$('#urls').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit(); });
+$('#url').addEventListener('input', updateInput);
+$('#url').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); submit(); }
+  if (e.key === 'Escape') { $('#url').value = ''; state.pending = []; updateInput(); }
+  if (e.key === 'Backspace' && !$('#url').value && state.pending.length) { state.pending = []; updateInput(); }
+});
+$('#chipx').addEventListener('click', () => { state.pending = []; updateInput(); $('#url').focus(); });
 $('#go').addEventListener('click', submit);
 
 async function submit() {
-  const text = $('#urls').value.trim();
-  if (!text) return toast('Paste at least one video link first.');
+  const text = [...state.pending, $('#url').value.trim()].filter(Boolean).join('\n');
+  if (!text) { $('#url').focus(); return toast('Paste a video link first.'); }
   const btn = $('#go'); btn.disabled = true; btn.textContent = 'Adding…';
   try {
     const r = await api('/api/jobs', { method: 'POST', body: JSON.stringify({
       text, model: $('#model').value, language: $('#language').value || null,
       translate: $('#translate').checked, save_video: $('#save_video').checked,
-      expand: $('#expand').checked, cookies_browser: $('#cookies').value || null,
+      expand: true, cookies_browser: $('#cookies').value || null,
     }) });
-    $('#urls').value = ''; $('#count').textContent = 'No links yet';
+    $('#url').value = ''; state.pending = [];
     const cached = r.jobs.filter(j => j.cached).length, fresh = r.jobs.length - cached;
     let msg = fresh ? `Queued ${fresh} video${fresh > 1 ? 's' : ''}` : '';
     if (cached) msg += `${msg ? ' · ' : ''}${cached} already in history`;
@@ -297,23 +294,66 @@ async function submit() {
     if (r.jobs.length === 1) state.expanded.add(r.jobs[0].id);
     await refresh();
   } catch (e) { toast(e.message, 7000); }
-  finally { btn.disabled = false; btn.textContent = 'Transcribe'; }
+  finally { btn.disabled = false; updateInput(); }
 }
+
+// ---------- options popover
+for (const [k, v] of Object.entries(LANGS)) $('#language').add(new Option(v, k));
+let MODELS = [];
+async function loadModels() {
+  const { default: def, models } = await api('/api/models');
+  MODELS = models;
+  const sel = $('#model'); sel.innerHTML = '';
+  for (const m of models) {
+    const opt = new Option(`${m.id}${!m.available ? '' : m.cached ? ' ✓' : ' (downloads on first use)'}`, m.id);
+    opt.disabled = !m.available;
+    sel.add(opt);
+  }
+  sel.dataset.def = def;
+  sel.value = store.get('model', def);
+  if (!sel.value || sel.selectedOptions[0]?.disabled) sel.value = def;
+  optionsChanged();
+}
+// Neither Parakeet nor large-v3-turbo can translate, so the server switches to Whisper large-v3 — say so up front.
+function optionsChanged() {
+  const model = $('#model').value, m = MODELS.find(x => x.id === model);
+  $('#minfo').textContent = m ? m.info : '';
+  const note = $('#tr-note');
+  if ($('#translate').checked && ['auto', 'parakeet-ultra', 'large-v3-turbo'].includes(model)) {
+    const v3 = MODELS.find(x => x.id === 'large-v3');
+    note.textContent = 'Translation uses Whisper large-v3' + (v3 && !v3.cached ? ' (~3 GB download on first use)' : '');
+    note.hidden = false;
+  } else note.hidden = true;
+  $('#gdot').hidden = !($('#translate').checked || $('#save_video').checked || $('#language').value || $('#cookies').value
+    || model !== $('#model').dataset.def);
+}
+for (const id of ['model', 'language', 'cookies']) $('#' + id).addEventListener('change', e => { store.set(id, e.target.value); optionsChanged(); });
+for (const id of ['translate', 'save_video']) $('#' + id).addEventListener('change', e => { store.set(id, e.target.checked); optionsChanged(); });
+function restoreOpts() {
+  $('#language').value = store.get('language', '');
+  $('#cookies').value = store.get('cookies', '');
+  for (const id of ['translate', 'save_video']) $('#' + id).checked = store.get(id, false);
+}
+$('#gear').addEventListener('click', () => { $('#pop').hidden = !$('#pop').hidden; });
+document.addEventListener('click', e => {
+  if (!e.target.closest('#pop, #gear')) $('#pop').hidden = true;
+  if (!e.target.closest('.menuwrap')) $$('.menu').forEach(m => m.hidden = true);
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { $('#pop').hidden = true; $$('.menu').forEach(m => m.hidden = true); } });
 
 // ---------- history list
 async function refresh() {
   try {
     const qs = new URLSearchParams(); if (state.q) qs.set('q', state.q); if (state.starred) qs.set('starred', 'true');
     const { jobs } = await api('/api/jobs?' + qs);
-    // invalidate cached details of jobs whose status changed
-    for (const j of jobs) {
+    for (const j of jobs) {                          // a status change invalidates the cached full transcript
       const old = state.jobs.find(o => o.id === j.id);
       if (old && old.status !== j.status) state.details.delete(j.id);
     }
     state.jobs = jobs;
     for (const id of [...state.selected]) if (!jobs.some(j => j.id === id && j.status === 'done')) state.selected.delete(id);
     render();
-  } catch (e) { /* server restarting — try again on next tick */ }
+  } catch (e) { /* server restarting — try again on the next tick */ }
   schedule();
 }
 function schedule() {
@@ -325,62 +365,62 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) refr
 
 function rowHTML(j) {
   const m = j.meta || {};
-  const done = j.status === 'done';
-  const title = m.title || j.url;
-  const thumb = j.files?.cover ? `style="background-image:url('/api/jobs/${j.id}/cover')"` : '';
-  const sub = [
-    `<span class="tag ${esc(j.platform)}">${esc(PLAT[j.platform] || 'Video')}</span>`,
-    m.uploader ? esc(m.uploader) : '',
-    m.duration != null ? fmtDur(m.duration) : '',
-    m.view_count != null ? `${fmtNum(m.view_count)} views` : '',
-    done && j.language ? `<span class="tag">${esc(j.language.toUpperCase())}${j.options?.translate ? ' → EN' : ''}</span>` : '',
-    done && j.model ? esc(j.model) : '',
-    done && j.elapsed ? `${j.elapsed}s` : '',
-  ].filter(Boolean).join('<span>·</span>');
-  let status = '';
-  if (j.status === 'queued') status = `<div class="state queued">Queued</div>`;
-  else if (j.status === 'downloading' || j.status === 'transcribing')
-    status = `<div class="state run"><span class="spin"></span>${esc(j.detail || (j.status === 'downloading' ? 'Downloading…' : 'Transcribing…'))}</div>`;
-  else if (j.status === 'error') status = `<div class="err">${esc(j.error || 'Failed')}</div>`;
-  else if (done) status = j.text_len ? `<div class="preview">${esc(j.preview)}${j.text_len > 220 ? '…' : ''}</div>` : `<div class="preview none">No speech detected (music or silence)</div>`;
-  const pick = done ? `<input class="pick" type="checkbox" data-act="pick" aria-label="Select" ${state.selected.has(j.id) ? 'checked' : ''}>` : '';
-  const retry = j.status === 'error' ? `<button class="icon-btn" data-act="retry" title="Retry">↻</button>` : '';
-  const running = j.status === 'downloading' || j.status === 'transcribing';
-  return `${pick}<div class="thumb" ${thumb}>${thumb ? '' : '▶'}</div>
-    <div class="main"><div class="title">${esc(title)}</div><div class="sub">${sub}</div>${status}</div>
-    <div class="acts"><div class="acts-row">
-      ${retry}
-      <button class="icon-btn ${j.starred ? 'on' : ''}" data-act="star" title="Bookmark" aria-pressed="${j.starred}">${j.starred ? '★' : '☆'}</button>
-      <button class="icon-btn" data-act="del" title="${running ? 'Wait for it to finish' : 'Delete'}" ${running ? 'disabled' : ''}>✕</button>
-    </div></div>`;
+  const done = j.status === 'done', running = j.status === 'downloading' || j.status === 'transcribing';
+  const cover = j.files?.cover ? `style="background-image:url('/api/jobs/${j.id}/cover')"` : '';
+  let mt;
+  if (j.status === 'queued') mt = `<p class="mt">Queued</p>`;
+  else if (running) mt = `<p class="mt run"><span class="spin"></span>${esc(j.detail || 'Working…')}</p>`;
+  else if (j.status === 'error') mt = `<p class="mt bad" title="${esc(j.error || '')}">${esc(j.error || 'Failed')}</p>`;
+  else {
+    const spoke = !!j.text_len;
+    const parts = [PLAT[j.platform] || 'Video', m.duration != null ? fmtDur(m.duration) : '',
+      spoke ? (j.language ? j.language.toUpperCase() + (j.options?.translate ? ' → EN' : '') : '') : 'No speech detected',
+      spoke ? j.model : '', spoke && j.elapsed ? j.elapsed + 's' : ''].filter(Boolean);
+    mt = `<p class="mt">${parts.map(esc).join(' · ')}</p>`;
+  }
+  const pick = done ? `<label class="pick"><input type="checkbox" data-act="pick" aria-label="Select" ${state.selected.has(j.id) ? 'checked' : ''}></label>` : '';
+  return `<div class="th" ${cover}>${cover ? '' : ico('play', 14, true)}${pick}${running ? '<span class="scrim"><span class="spin big"></span></span>' : ''}</div>
+    <div class="tx"><p class="ti">${esc(m.title || j.url)}</p>${mt}</div>
+    <div class="rt">
+      <span class="ago">${j.starred ? `<span class="st">${ico('star', 12, true)}</span>` : ''}${ago(j.finished_at || j.created_at)}</span>
+      <div class="ac">
+        ${j.status === 'error' ? `<button data-act="retry" title="Retry" aria-label="Retry">${ico('retry', 15)}</button>` : ''}
+        <button data-act="star" class="${j.starred ? 'on' : ''}" title="Star" aria-label="Star" aria-pressed="${j.starred}">${ico('star', 15, j.starred)}</button>
+        <button data-act="del" title="${running ? 'Wait for it to finish' : 'Delete'}" aria-label="Delete" ${running ? 'disabled' : ''}>${ico('x', 15)}</button>
+      </div>
+    </div>`;
 }
 
 function render() {
   const list = $('#list');
   const ids = state.jobs.map(j => j.id);
   for (const el of [...list.children]) if (!ids.includes(el.dataset.id)) el.remove();
+  document.body.classList.toggle('selecting', state.selected.size > 0);
   state.jobs.forEach((j, i) => {
     let el = list.querySelector(`[data-id="${j.id}"]`);
     if (!el) {
-      el = document.createElement('article'); el.className = 'card'; el.dataset.id = j.id;
-      el.innerHTML = '<div class="row"></div><div class="body" hidden></div>';
+      el = document.createElement('article'); el.className = 'item'; el.dataset.id = j.id;
+      el.innerHTML = '<div class="row" tabindex="0"></div><div class="body" hidden></div>';
     }
     const ref = list.children[i];
     if (ref !== el) list.insertBefore(el, ref || null);
     const row = $('.row', el);
-    const sig = JSON.stringify([j.status, j.detail, j.error, j.starred, j.preview, j.meta?.title, j.files, state.selected.has(j.id)]);
+    const sig = JSON.stringify([j.status, j.detail, j.error, j.starred, j.meta?.title, j.meta?.duration, j.files, j.language,
+      j.model, j.elapsed, j.text_len, state.selected.has(j.id), ago(j.finished_at || j.created_at)]);
     if (el._sig !== sig) { el._sig = sig; row.innerHTML = rowHTML(j); }
     row.classList.toggle('clickable', j.status === 'done');
-    el.classList.toggle('open', j.status === 'done' && state.expanded.has(j.id));
+    el.classList.toggle('is-err', j.status === 'error');
     syncBody(el, j);
   });
-  $('#empty').hidden = state.jobs.length > 0;
-  $('#empty').textContent = (state.q || state.starred) ? 'No matching transcripts.' : 'Nothing here yet. Paste a link above to get your first transcript.';
+  list.hidden = state.jobs.length === 0;
+  const empty = $('#empty');
+  empty.hidden = state.jobs.length > 0;
+  empty.textContent = (state.q || state.starred) ? 'No matching transcripts.' : 'Paste a link above to get started.';
   const n = state.selected.size;
-  $('#bulk').disabled = n === 0; $('#bulk').textContent = n ? `Export ${n} selected (.zip)` : 'Export selected (.zip)';
+  $('#selbar').hidden = n === 0; $('#srch').hidden = n > 0; $('#seln').textContent = `${n} selected`;
 }
 
-// ---------- expanded transcript
+// ---------- open item: poster + transcript
 function syncBody(el, j) {
   const body = $('.body', el);
   const open = state.expanded.has(j.id) && j.status === 'done';
@@ -395,69 +435,103 @@ function syncBody(el, j) {
     }
     return;
   }
-  const key = j.id + ':' + state.ts;
-  if (el._bodyKey !== key) { el._bodyKey = key; renderBody(body, d); }
+  if (el._bodyKey !== j.id) { el._bodyKey = j.id; renderBody(body, d); }
+}
+function txHTML(d) {
+  if (!d.text) return `<p class="none">No speech detected. This video may be music-only or silent.</p>`;
+  return state.ts ? d.segments.map(s => `<div class="seg-l"><time>${fmtDur(s.start)}</time><span>${esc(s.text)}</span></div>`).join('')
+    : `<p>${esc(d.text)}</p>`;
 }
 function renderBody(body, d) {
   const m = d.meta || {};
-  const dl = FORMATS.map(f => `<a class="btn" href="/api/jobs/${d.id}/export?fmt=${f}&timestamps=${state.ts}" download>${f.toUpperCase()}</a>`).join('');
-  const media = [
-    d.files?.video ? `<a class="btn" href="/api/jobs/${d.id}/video?download=true" download>Video (mp4)</a>` : '',
-    d.files?.cover ? `<a class="btn" href="/api/jobs/${d.id}/cover" download="cover.jpg">Cover</a>` : '',
-  ].join('');
-  const content = !d.text ? `<p style="color:var(--muted);font-style:italic">No speech detected — this video may be music-only or silent.</p>`
-    : state.ts ? d.segments.map(s => `<div class="seg"><time>${fmtDur(s.start)}</time><span>${esc(s.text)}</span></div>`).join('')
-    : `<p>${esc(d.text)}</p>`;
-  const stats = [m.like_count != null ? `♥ ${fmtNum(m.like_count)}` : '', m.comment_count != null ? `💬 ${fmtNum(m.comment_count)}` : '',
-    m.upload_date ? `${m.upload_date.slice(0,4)}-${m.upload_date.slice(4,6)}-${m.upload_date.slice(6,8)}` : '', `model: ${esc(d.model)}`].filter(Boolean).join(' · ');
-  body.innerHTML = `
-    <div class="tools">
-      <label><input type="checkbox" data-act="ts" ${state.ts ? 'checked' : ''}> Timestamps</label>
-      <button class="btn" data-act="copy">Copy text</button>
-      <span class="grp"><span class="lbl">Download</span>${dl}</span>
-      ${media ? `<span class="grp">${media}</span>` : ''}
-    </div>
-    <div class="transcript">${content}</div>
-    <div class="meta-line"><span>${stats}</span><a href="${esc(safeHref(m.webpage_url || d.url))}" target="_blank" rel="noopener noreferrer">Open original ↗</a></div>`;
+  const orig = safeHref(m.webpage_url || d.url);
+  const hasVideo = !!d.files?.video, hasCover = !!d.files?.cover;
+  const bg = hasCover ? `style="background-image:url('/api/jobs/${d.id}/cover')"` : '';
+  const poster = hasVideo
+    ? `<button class="poster" data-act="play" aria-label="Play saved video" title="Play" ${bg}><span class="pl">${ico('play', 16, true)}</span></button>`
+    : hasCover ? `<a class="poster" href="${esc(orig)}" target="_blank" rel="noopener noreferrer" aria-label="Open original" title="Open original" ${bg}><span class="pl ext">${ico('external', 14)}</span></a>` : '';
+  const menu = FORMATS.map(f => `<a href="/api/jobs/${d.id}/export?fmt=${f}&timestamps=${state.ts}" download data-fmt="${f}">${f.toUpperCase()}</a>`).join('')
+    + (hasVideo || hasCover ? '<hr>' : '')
+    + (hasVideo ? `<a href="/api/jobs/${d.id}/video?download=true" download>Video (mp4)</a>` : '')
+    + (hasCover ? `<a href="/api/jobs/${d.id}/cover" download="cover.jpg">Cover (jpg)</a>` : '');
+  const date = m.upload_date ? `${m.upload_date.slice(0, 4)}-${m.upload_date.slice(4, 6)}-${m.upload_date.slice(6, 8)}` : '';
+  const stats = [m.uploader, date, m.like_count != null ? `${fmtNum(m.like_count)} likes` : '', m.view_count != null ? `${fmtNum(m.view_count)} views` : ''].filter(Boolean).map(esc).join(' · ');
+  body.innerHTML = `${poster}
+    <div class="bd">
+      <div class="tools">
+        <button class="btn" data-act="copy">${ico('copy', 14)}Copy</button>
+        <button class="btn ${state.ts ? 'on' : ''}" data-act="ts" aria-pressed="${state.ts}">${ico('clock', 14)}Timestamps</button>
+        <span class="menuwrap"><button class="btn" data-act="menu" aria-haspopup="true">${ico('download', 14)}Save as${ico('chevron', 12)}</button><div class="menu" hidden>${menu}</div></span>
+        <span class="sp"></span>
+        <a class="btn" href="${esc(orig)}" target="_blank" rel="noopener noreferrer">${ico('external', 14)}Original</a>
+      </div>
+      <div class="transcript">${txHTML(d)}</div>
+      ${stats ? `<p class="ml">${stats}</p>` : ''}
+    </div>`;
 }
 
 // ---------- events (delegated)
 $('#list').addEventListener('click', async e => {
-  const card = e.target.closest('.card'); if (!card) return;
-  const id = card.dataset.id, job = state.jobs.find(j => j.id === id); if (!job) return;
+  const item = e.target.closest('.item'); if (!item) return;
+  const id = item.dataset.id, job = state.jobs.find(j => j.id === id); if (!job) return;
   const act = e.target.closest('[data-act]')?.dataset.act;
   try {
-    if (act === 'pick') { e.target.checked ? state.selected.add(id) : state.selected.delete(id); card._sig = null; render(); return; }
+    if (act === 'pick') { e.target.checked ? state.selected.add(id) : state.selected.delete(id); item._sig = null; render(); return; }
     if (act === 'star') { await api('/api/jobs/' + id, { method: 'PATCH', body: JSON.stringify({ starred: !job.starred }) }); return refresh(); }
     if (act === 'del') {
       if (!confirm('Delete this transcript and its saved files?')) return;
       await api('/api/jobs/' + id, { method: 'DELETE' }); state.expanded.delete(id); state.details.delete(id); return refresh();
     }
     if (act === 'retry') { await api(`/api/jobs/${id}/retry`, { method: 'POST' }); return refresh(); }
-    if (act === 'ts') { state.ts = e.target.checked; return render(); }
+    if (act === 'ts') {
+      state.ts = !state.ts;
+      $$('.item .body:not([hidden])').forEach(b => {
+        const d = state.details.get(b.parentElement.dataset.id); if (!d) return;
+        $('.transcript', b).innerHTML = txHTML(d);
+        const t = $('[data-act="ts"]', b); t.classList.toggle('on', state.ts); t.setAttribute('aria-pressed', state.ts);
+        $$('.menu a[data-fmt]', b).forEach(a => a.href = a.href.replace(/timestamps=\w+/, 'timestamps=' + state.ts));
+      });
+      return;
+    }
     if (act === 'copy') {
       const d = state.details.get(id);
       const text = state.ts ? d.segments.map(s => `[${fmtDur(s.start)}] ${s.text}`).join('\n') : d.text;
       await navigator.clipboard.writeText(text); return toast('Copied to clipboard');
     }
-    if (e.target.closest('.row') && job.status === 'done' && !e.target.closest('a,button,input')) {
-      state.expanded.has(id) ? state.expanded.delete(id) : state.expanded.add(id); render();
+    if (act === 'menu') {
+      const menu = $('.menu', e.target.closest('.menuwrap')), wasHidden = menu.hidden;
+      $$('.menu').forEach(m => m.hidden = true); menu.hidden = !wasHidden; return;
     }
+    if (act === 'play') {                              // swap the poster for the saved video, right in place
+      const p = e.target.closest('.poster'), d = state.details.get(id), v = document.createElement('video');
+      v.className = 'pv'; v.src = `/api/jobs/${id}/video`; v.controls = true; v.autoplay = true; v.playsInline = true;
+      if (d?.files?.cover) v.poster = `/api/jobs/${id}/cover`;
+      p.replaceWith(v); return;
+    }
+    if (e.target.closest('.row') && job.status === 'done' && !e.target.closest('a,button,input,label')) toggleOpen(id);
   } catch (err) { toast(err.message, 6000); }
 });
+function toggleOpen(id) { state.expanded.has(id) ? state.expanded.delete(id) : state.expanded.add(id); render(); }
+$('#list').addEventListener('keydown', e => {
+  const row = e.target.closest('.row.clickable');
+  if (row && e.target === row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); toggleOpen(row.parentElement.dataset.id); }
+});
 
-$('#f-all').onclick = () => setFilter(false);
-$('#f-star').onclick = () => setFilter(true);
+// ---------- filters, search, selection
 function setFilter(starred) {
   state.starred = starred; $('#f-all').classList.toggle('on', !starred); $('#f-star').classList.toggle('on', starred); refresh();
 }
+$('#f-all').onclick = () => setFilter(false);
+$('#f-star').onclick = () => setFilter(true);
+$('#sbtn').onclick = () => { $('#q').hidden = false; $('#sbtn').hidden = true; $('#q').focus(); };
+$('#q').addEventListener('blur', () => { if (!$('#q').value) { $('#q').hidden = true; $('#sbtn').hidden = false; } });
+$('#q').addEventListener('keydown', e => { if (e.key === 'Escape') { $('#q').value = ''; state.q = ''; $('#q').blur(); refresh(); } });
 let qTimer; $('#q').addEventListener('input', e => { clearTimeout(qTimer); qTimer = setTimeout(() => { state.q = e.target.value.trim(); refresh(); }, 250); });
 $('#sel-all').onclick = () => {
-  const done = state.jobs.filter(j => j.status === 'done');
-  const all = done.length && done.every(j => state.selected.has(j.id));
-  done.forEach(j => all ? state.selected.delete(j.id) : state.selected.add(j.id));
-  document.querySelectorAll('.card').forEach(c => c._sig = null); render();
+  state.jobs.filter(j => j.status === 'done').forEach(j => state.selected.add(j.id));
+  $$('.item').forEach(c => c._sig = null); render();
 };
+$('#sel-x').onclick = () => { state.selected.clear(); $$('.item').forEach(c => c._sig = null); render(); };
 $('#bulk').onclick = () => {
   const ids = [...state.selected].join(',');
   const a = document.createElement('a');
@@ -465,7 +539,9 @@ $('#bulk').onclick = () => {
   a.download = 'transcripts.zip'; document.body.appendChild(a); a.click(); a.remove();
 };
 
-(async () => { restoreOpts(); await loadModels().catch(e => toast(e.message)); refresh(); })();
+// ---------- start
+$$('[data-ico]').forEach(el => el.innerHTML = ico(el.dataset.ico, +el.dataset.size || 16));
+(async () => { restoreOpts(); await loadModels().catch(e => toast(e.message)); updateInput(); refresh(); $('#url').focus(); })();
 </script>
 </body>
 </html>

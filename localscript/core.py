@@ -411,11 +411,11 @@ def _load_parakeet():
         transcribe_cpp.set_log_callback(None)
         model = transcribe_cpp.Model(gguf)
     _parakeet = (transcribe_cpp, model)
-    atexit.register(_close_parakeet)
+    atexit.register(close_parakeet)
     return _parakeet
 
 
-def _close_parakeet() -> None:
+def close_parakeet() -> None:
     """Free the Parakeet model's Metal buffers before the interpreter exits. ggml asserts, and aborts the whole
     process (a crash report on every quit), if its Metal device is torn down while model buffers are still
     alive, which happens when daemon server threads keep Python from freeing the model during shutdown."""

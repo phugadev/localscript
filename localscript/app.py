@@ -105,6 +105,35 @@ def _match_background(window) -> None:
         pass
 
 
+_quit_observer = None  # keeps the notification observer alive
+
+
+def _clean_exit_on_quit() -> None:
+    """Quit (⌘Q, Dock menu, logout) makes AppKit call C exit() directly, so Python never finalizes and its atexit
+    hooks never run. ggml then tears down its Metal device with the Parakeet model's buffers still alive, asserts,
+    and aborts the whole process: a crash report on every quit. Free the model while we still can (AppKit announces
+    termination first), then leave right away so no static destructor runs after it."""
+    global _quit_observer
+    try:
+        from AppKit import NSApplicationWillTerminateNotification
+        from Foundation import NSNotificationCenter
+
+        from . import core
+
+        def on_will_terminate(_note) -> None:
+            core.close_parakeet()
+            try:
+                sys.stdout.flush()
+                sys.stderr.flush()
+            finally:
+                os._exit(0)
+
+        _quit_observer = NSNotificationCenter.defaultCenter().addObserverForName_object_queue_usingBlock_(
+            NSApplicationWillTerminateNotification, None, None, on_will_terminate)
+    except Exception:  # noqa: BLE001 - the atexit hook still covers normal interpreter shutdown
+        pass
+
+
 def _stay_awake_while_busy() -> None:
     """Hold a user-initiated activity assertion while jobs are unfinished, so macOS doesn't App-Nap a window that
     is behind other apps and slow a long batch. Released when the queue is empty (system idle sleep is still
@@ -176,5 +205,6 @@ def run(port: int | None = None, debug: bool = False) -> int:
     window.events.closing += on_closing
     window.events.loaded += lambda: _match_background(window)
     _brand()
+    _clean_exit_on_quit()
     webview.start(debug=debug)
     return 0
